@@ -44,6 +44,19 @@ public class DuckPlugin extends Plugin
 	DuckPond barbVillagePond = new DuckPond(new WorldPoint(3110, 3435, 0), new WorldPoint(3113, 3431, 0), 4);
 	DuckPond[] duckPonds = {yanillePond, barbVillagePond};
 
+//	zul fishing
+//2184 3076
+//		2195 3071
+//
+//	zul pier
+//2217 3052
+//		2210 3055
+//
+//	underground bloodvelds
+//
+//3618 9742
+//		3624 9736
+
 	int breadItemId = 2309;
 
 	@Override
