@@ -42,20 +42,11 @@ public class DuckPlugin extends Plugin
 
 	DuckPond yanillePond = new DuckPond(new WorldPoint(2542, 3082, 0), new WorldPoint(2544, 3079, 0), 3);
 	DuckPond barbVillagePond = new DuckPond(new WorldPoint(3110, 3435, 0), new WorldPoint(3113, 3431, 0), 4);
-	DuckPond[] duckPonds = {yanillePond, barbVillagePond};
-
-//	zul fishing
-//2184 3076
-//		2195 3071
-//
-//	zul pier
-//2217 3052
-//		2210 3055
-//
-//	underground bloodvelds
-//
-//3618 9742
-//		3624 9736
+	DuckPond zulandraFishingPond = new DuckPond(new WorldPoint(2184, 3076,0), new WorldPoint(2195,3071, 0), 5);
+	DuckPond zulandraPierPond = new DuckPond(new WorldPoint(2217, 3052,0), new WorldPoint(2210,3055, 0), 3);
+	DuckPond undergroundBloodveldPond = new DuckPond(new WorldPoint(3618, 9742,0), new WorldPoint(3624,9736, 0), 2);
+	DuckPond southFarmingGuildPond = new DuckPond(new WorldPoint(1235, 3690,0), new WorldPoint(1226,3693, 0), 5);
+	DuckPond[] duckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond};
 
 	int breadItemId = 2309;
 

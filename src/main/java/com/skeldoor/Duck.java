@@ -212,7 +212,7 @@ public class Duck {
             if (targetQueueSize > 0)
             {
                 int targetPlane = targetQueue[cTargetIndex].worldDestinationPosition.getPlane();
-
+                //todo protect this
                 LocalPoint targetPosition = targetQueue[cTargetIndex].localDestinationPosition;
 
                 if (targetPosition == null){
