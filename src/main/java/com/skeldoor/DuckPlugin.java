@@ -46,14 +46,18 @@ public class DuckPlugin extends Plugin
 	DuckPond zulandraPierPond = new DuckPond(new WorldPoint(2217, 3052,0), new WorldPoint(2210,3055, 0), 3);
 	DuckPond undergroundBloodveldPond = new DuckPond(new WorldPoint(3618, 9742,0), new WorldPoint(3624,9736, 0), 2);
 	DuckPond southFarmingGuildPond = new DuckPond(new WorldPoint(1235, 3690,0), new WorldPoint(1226,3693, 0), 5);
-	DuckPond[] duckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond};
+	DuckPond fossilIslandCleaningPond = new DuckPond(new WorldPoint(3691, 3884,0), new WorldPoint(3692,3882, 0), 2);
+	DuckPond[] staticDuckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond, fossilIslandCleaningPond};
+	List<DuckPond> dynamicDuckPonds;
 
 	int breadItemId = 2309;
+	int POHPondID = 4527;
 
 	@Override
 	protected void startUp()
 	{
 		ducks = new ArrayList<>();
+		dynamicDuckPonds = new ArrayList<>();
 		overlayManager.add(duckOverlay);
 	}
 
@@ -74,6 +78,17 @@ public class DuckPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
+		if (gameStateChanged.getGameState() == GameState.LOGGING_IN)
+		{
+			for (DuckPond duckpond : staticDuckPonds){
+				for (int i = 0; i < duckpond.getMaxDucks(); i++)
+				{
+					Duck duck = new Duck();
+					ducks.add(duck);
+					duck.init(client, duckpond);
+				}
+			}
+		}
 		if (gameStateChanged.getGameState() == GameState.LOADING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN)
 		{
 			for (Duck duck : ducks)
@@ -81,18 +96,46 @@ public class DuckPlugin extends Plugin
 				duck.despawn();
 			}
 		}
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN || gameStateChanged.getGameState() == GameState.HOPPING)
+		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			for (DuckPond duckpond : duckPonds){
-				for (int i = 0; i < duckpond.getMaxDucks(); i++)
+			for (Duck duck : ducks){
+				duck.spawn(duck.pond.getRandomPointInPond(), getRandom(0, 2047));
+			}
+		}
+	}
+
+	@Subscribe
+	public void onGameObjectSpawned(GameObjectSpawned gos){
+		GameObject housePond = gos.getGameObject();
+		if (housePond.getId() == POHPondID){
+			if (!dynamicPondAlreadyExists(housePond)) {
+				WorldPoint SWTile = housePond.getWorldLocation();
+				DuckPond dynamicHousePond = new DuckPond(new WorldPoint(SWTile.getX(), SWTile.getY() +1, SWTile.getPlane()), new WorldPoint(SWTile.getX() +1, SWTile.getY(),SWTile.getPlane()), 2);
+				dynamicDuckPonds.add(dynamicHousePond);
+				for (int i = 0; i < dynamicHousePond.getMaxDucks(); i++)
 				{
 					Duck duck = new Duck();
 					ducks.add(duck);
-					duck.init(client, duckpond);
-					duck.spawn(duck.pond.getRandomPointInPond(), 0);
+					duck.init(client, dynamicHousePond);
+					duck.getRlObject().setRadius(250); // Make duck render on top of pond
 				}
 			}
+			// Refresh runelite objects after POH loading screens
+			for (Duck duck : ducks){
+				duck.despawn();
+				duck.spawn(duck.pond.getRandomPointInPond(), getRandom(0, 2047));
+			}
 		}
+	}
+
+	private boolean dynamicPondAlreadyExists(GameObject housePond) {
+		WorldPoint SWTile = housePond.getWorldLocation();
+		for (DuckPond existingDynamicDuckPond : dynamicDuckPonds){
+			if (existingDynamicDuckPond.compareSWTiles(SWTile)){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Schedule(

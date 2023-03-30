@@ -7,5 +7,10 @@ Currently adds ducks to the following locations:
 
 * Yanille pond
 * Barbarian Village river fishing spot
+* Zulandra
+* Underground Dark Meyer Bloodveld Area
+* South of the Farming Guild
+* Fossil Island Cleaning Pool
+* POH Ponds
 
 <img src="https://i.imgur.com/355qQZX.png" alt="ducks">

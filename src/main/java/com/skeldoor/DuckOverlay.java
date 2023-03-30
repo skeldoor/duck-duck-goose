@@ -15,7 +15,6 @@ import net.runelite.client.ui.overlay.OverlayLayer;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayUtil;
 
-
 public class DuckOverlay extends Overlay{
     public static final int IMAGE_Z_OFFSET = 30;
 

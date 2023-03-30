@@ -92,10 +92,12 @@ public class Duck {
     public void spawn(WorldPoint position, int jauOrientation)
     {
         LocalPoint localPosition = LocalPoint.fromWorld(client, pond.getRandomPointInPond());
-        if (localPosition != null && client.getPlane() == position.getPlane())
+        if (localPosition != null && client.getPlane() == position.getPlane()){
             rlObject.setLocation(localPosition, position.getPlane());
-        else
+        }
+        else {
             return;
+        }
         rlObject.setOrientation(jauOrientation);
         rlObject.setAnimation(animationPoses[0]);
         rlObject.setShouldLoop(true);
@@ -211,8 +213,9 @@ public class Duck {
         {
             if (targetQueueSize > 0)
             {
+                if (targetQueue[cTargetIndex] == null || targetQueue[cTargetIndex].worldDestinationPosition == null) return;
                 int targetPlane = targetQueue[cTargetIndex].worldDestinationPosition.getPlane();
-                //todo protect this
+
                 LocalPoint targetPosition = targetQueue[cTargetIndex].localDestinationPosition;
 
                 if (targetPosition == null){
