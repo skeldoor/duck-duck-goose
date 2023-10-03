@@ -47,11 +47,14 @@ public class DuckPlugin extends Plugin
 	DuckPond undergroundBloodveldPond = new DuckPond(new WorldPoint(3618, 9742,0), new WorldPoint(3624,9736, 0), 2);
 	DuckPond southFarmingGuildPond = new DuckPond(new WorldPoint(1235, 3690,0), new WorldPoint(1226,3693, 0), 5);
 	DuckPond fossilIslandCleaningPond = new DuckPond(new WorldPoint(3691, 3884,0), new WorldPoint(3692,3882, 0), 2);
-	DuckPond[] staticDuckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond, fossilIslandCleaningPond};
+	DuckPond lletyaPond = new DuckPond(new WorldPoint(2325, 3152,0), new WorldPoint(2328,3151, 0), 3);
+	DuckPond[] staticDuckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond, fossilIslandCleaningPond, lletyaPond};
 	List<DuckPond> dynamicDuckPonds;
 
 	int breadItemId = 2309;
 	int POHPondID = 4527;
+
+	boolean ducksInitialised = false;
 
 	@Override
 	protected void startUp()
@@ -78,7 +81,7 @@ public class DuckPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		if (gameStateChanged.getGameState() == GameState.LOGGING_IN)
+		if (gameStateChanged.getGameState() == GameState.LOGGING_IN && !ducksInitialised)
 		{
 			for (DuckPond duckpond : staticDuckPonds){
 				for (int i = 0; i < duckpond.getMaxDucks(); i++)
@@ -88,6 +91,7 @@ public class DuckPlugin extends Plugin
 					duck.init(client, duckpond);
 				}
 			}
+			ducksInitialised = true;
 		}
 		if (gameStateChanged.getGameState() == GameState.LOADING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN)
 		{

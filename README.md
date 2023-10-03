@@ -12,5 +12,7 @@ Currently adds ducks to the following locations:
 * South of the Farming Guild
 * Fossil Island Cleaning Pool
 * POH Ponds
+* Lletya
 
 <img src="https://i.imgur.com/355qQZX.png" alt="ducks">
+<img src="https://i.imgur.com/FAKkEgq.png" alt="more ducks">
