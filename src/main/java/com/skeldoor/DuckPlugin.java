@@ -48,7 +48,8 @@ public class DuckPlugin extends Plugin
 	DuckPond southFarmingGuildPond = new DuckPond(new WorldPoint(1235, 3690,0), new WorldPoint(1226,3693, 0), 5);
 	DuckPond fossilIslandCleaningPond = new DuckPond(new WorldPoint(3691, 3884,0), new WorldPoint(3692,3882, 0), 2);
 	DuckPond lletyaPond = new DuckPond(new WorldPoint(2325, 3152,0), new WorldPoint(2328,3151, 0), 3);
-	DuckPond[] staticDuckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond, fossilIslandCleaningPond, lletyaPond};
+	DuckPond ardyZooPond = new DuckPond(new WorldPoint(2629, 3270,0), new WorldPoint(2631,3269, 0), 2);
+	DuckPond[] staticDuckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond, fossilIslandCleaningPond, lletyaPond, ardyZooPond};
 	List<DuckPond> dynamicDuckPonds;
 
 	int breadItemId = 2309;
