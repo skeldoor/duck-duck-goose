@@ -3,10 +3,8 @@ package com.skeldoor;
 import javax.inject.Inject;
 
 import com.google.inject.Provides;
-import jdk.vm.ci.meta.Local;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
-import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.client.chat.ChatColorType;

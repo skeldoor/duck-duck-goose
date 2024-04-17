@@ -6,7 +6,6 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.geometry.SimplePolygon;
 import net.runelite.api.model.Jarvis;
 
-import java.util.ArrayList;
 import java.util.Random;
 
 import static net.runelite.api.Perspective.COSINE;
