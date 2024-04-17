@@ -1,14 +1,19 @@
 package com.skeldoor;
 
 import javax.inject.Inject;
+
+import com.google.inject.Provides;
+import jdk.vm.ci.meta.Local;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
+import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
@@ -37,6 +42,9 @@ public class DuckPlugin extends Plugin
 
 	@Inject
 	private DuckOverlay duckOverlay;
+
+	@Inject
+	private DuckConfig config;
 
 	List<Duck> ducks;
 
@@ -89,7 +97,7 @@ public class DuckPlugin extends Plugin
 				{
 					Duck duck = new Duck();
 					ducks.add(duck);
-					duck.init(client, duckpond);
+					duck.init(client, duckpond, false);
 				}
 			}
 			ducksInitialised = true;
@@ -110,10 +118,42 @@ public class DuckPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onNpcSpawned(NpcSpawned npcSpawned){
+		NPC npc = npcSpawned.getNpc();
+		if (npc.getId() == 12808){ // Minimus in colosseum
+			WorldPoint SWTile = npc.getWorldLocation();
+			if (!dynamicPondAlreadyExists(SWTile)) {
+				DuckPond colosseumPond1 = new DuckPond(new WorldPoint(SWTile.getX()+20, SWTile.getY()+20, 0), new WorldPoint(SWTile.getX()+15, SWTile.getY()+15, 0), 6);
+				DuckPond colosseumPond2 = new DuckPond(new WorldPoint(SWTile.getX()-20, SWTile.getY()+20, 0), new WorldPoint(SWTile.getX()-15, SWTile.getY()+15, 0), 6);
+				DuckPond colosseumPond3 = new DuckPond(new WorldPoint(SWTile.getX()-20, SWTile.getY()-20, 0), new WorldPoint(SWTile.getX()-15, SWTile.getY()-15, 0), 6);
+				DuckPond colosseumPond4 = new DuckPond(new WorldPoint(SWTile.getX()+20, SWTile.getY()-20, 0), new WorldPoint(SWTile.getX()+15, SWTile.getY()-15, 0), 6);
+
+				dynamicDuckPonds.add(colosseumPond1);
+				dynamicDuckPonds.add(colosseumPond2);
+				dynamicDuckPonds.add(colosseumPond3);
+				dynamicDuckPonds.add(colosseumPond4);
+				for (DuckPond duckPond: new ArrayList<>(Arrays.asList(colosseumPond1, colosseumPond2, colosseumPond3, colosseumPond4))){
+					for (int i = 0; i < duckPond.getMaxDucks(); i++)
+					{
+						Duck duck = new Duck();
+						ducks.add(duck);
+						duck.init(client, duckPond, true);
+					}
+				}
+			}
+			// Refresh runelite objects after colosseum loading
+			for (Duck duck : ducks){
+				duck.despawn();
+				duck.spawn(duck.pond.getRandomPointInPond(), getRandom(0, 2047));
+			}
+		}
+	}
+
+	@Subscribe
 	public void onGameObjectSpawned(GameObjectSpawned gos){
 		GameObject housePond = gos.getGameObject();
 		if (housePond.getId() == POHPondID){
-			if (!dynamicPondAlreadyExists(housePond)) {
+			if (!dynamicPondAlreadyExists(housePond.getWorldLocation())) {
 				WorldPoint SWTile = housePond.getWorldLocation();
 				DuckPond dynamicHousePond = new DuckPond(new WorldPoint(SWTile.getX(), SWTile.getY() +1, SWTile.getPlane()), new WorldPoint(SWTile.getX() +1, SWTile.getY(),SWTile.getPlane()), 2);
 				dynamicDuckPonds.add(dynamicHousePond);
@@ -121,7 +161,7 @@ public class DuckPlugin extends Plugin
 				{
 					Duck duck = new Duck();
 					ducks.add(duck);
-					duck.init(client, dynamicHousePond);
+					duck.init(client, dynamicHousePond, false);
 					duck.getRlObject().setRadius(250); // Make duck render on top of pond
 				}
 			}
@@ -133,10 +173,9 @@ public class DuckPlugin extends Plugin
 		}
 	}
 
-	private boolean dynamicPondAlreadyExists(GameObject housePond) {
-		WorldPoint SWTile = housePond.getWorldLocation();
+	private boolean dynamicPondAlreadyExists(WorldPoint housePondSWTile) {
 		for (DuckPond existingDynamicDuckPond : dynamicDuckPonds){
-			if (existingDynamicDuckPond.compareSWTiles(SWTile)){
+			if (existingDynamicDuckPond.compareSWTiles(housePondSWTile)){
 				return true;
 			}
 		}
@@ -154,7 +193,7 @@ public class DuckPlugin extends Plugin
 				if (getRandom(0, 3) == 0){ // Only move the ducks a third of the time
 					WorldPoint newPoint = duck.pond.getRandomPointInPond();
 					duck.moveTo(newPoint, radToJau(Math.atan2(newPoint.getX(), newPoint.getY())));
-					duck.quack();
+					duck.quack(config.silenceDucks());
 				}
 			}
 		}
@@ -169,7 +208,7 @@ public class DuckPlugin extends Plugin
 		for (Duck duck : ducks) {
 			if (duck.isActive()) {
 				if (getRandom(0, 3) == 0){
-					duck.quack();
+					duck.quack(config.silenceDucks());
 				}
 			}
 		}
@@ -196,7 +235,7 @@ public class DuckPlugin extends Plugin
 		int firstMenuIndex = 1;
 
 		for (Duck duck : ducks){
-			if (duck.isActive()){
+			if (duck.isActive() && duck.getClickbox() != null && client.getMouseCanvasPosition() != null){
 				if (duck.getClickbox().contains(client.getMouseCanvasPosition().getX(),client.getMouseCanvasPosition().getY()))
 				{
 					String option;
@@ -247,6 +286,12 @@ public class DuckPlugin extends Plugin
 	public int getRandom(int min, int max) {
 		Random random = new Random();
 		return random.nextInt(max - min) + min;
+	}
+
+	@Provides
+	DuckConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(DuckConfig.class);
 	}
 }
 

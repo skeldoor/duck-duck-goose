@@ -6,6 +6,7 @@ import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.geometry.SimplePolygon;
 import net.runelite.api.model.Jarvis;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import static net.runelite.api.Perspective.COSINE;
@@ -35,31 +36,78 @@ public class Duck {
     private final Target[] targetQueue = new Target[MAX_TARGET_QUEUE_SIZE];
     private int targetQueueSize;
     private int lastDistance;
-    int currentAnimationID = 6818;
     int currentMovementSpeed = 0;
-    int duckIdleAnimationId = 6818;
-    int duckMovingAnimationId = 6817;
+    int currentAnimationID = 6818;
+    int normalDuckIdleAnimationId = 6818;
+    int normalDuckMovingAnimationId = 6817;
+    int colosseumDuckIdleAnimationId = 6813;
+    int colosseumDuckMovingAnimationId = 6819;
     public Animation[] animationPoses = new Animation[2];
     private final int[] duckModelIds = {26873, 26870};
+    private final int[] colosseumDuckModelIds = {26873, 26870};
     private final String[] duckNames = {"Drake", "Duck"};
     private String duckName;
     private boolean quacking = false;
     private int quackTimer = 0;
-    private final int MAX_QUACK_TIME = 30;
-    private final String quackText = "Quack!";
+    private final int MAX_QUACK_TIME = 45;
+    private final int COLOSSEUM_MAX_QUACK_TIME = 180;
+    private final String defaultQuackText = "Quack!";
+    private String quackText = "Quack!";
+    private final String[] colosseumEncouragementText = {
+            "Let's get quacking! You can do this!",
+            "Waddle to victory, my friend!",
+            "You're the ultimate quack attack!",
+            "Flap harder, fight stronger!",
+            "Be like water off a duck's back, unshakable and smooth!",
+            "Don't just paddle, make waves!",
+            "Feather you're ready or not, you can wing this!",
+            "Stay in formation, we're flying to victory!",
+            "Quack down the obstacles, you've got this!",
+            "Keep your beak sharp and your eyes on the prize!",
+            "Duck and cover!",
+            "Feather your nest with wins!",
+            "Just wing it!",
+            "Dive in, you'll float!",
+            "Paddle through the pain!",
+            "Stay quack-tastic!",
+            "Fly high, duckling!",
+            "Shake your tail feathers!",
+            "Quack up the courage!",
+            "Beak-lieve in yourself!",
+            "Splash into action!",
+            "Ruffle some feathers!",
+            "Quack on, warrior!",
+            "Bill them with bravery!",
+            "Migrate to victory!",
+            "Why are you listening to encouragement from a duck?"};
+    private Boolean isColosseumDuck = false;
+    private int sex;
 
     SimplePolygon clickbox;
 
-    public void init(Client client, DuckPond pond)
+    public void init(Client client, DuckPond pond, Boolean isColosseumDuck)
     {
         this.client = client;
         this.rlObject = client.createRuneLiteObject();
         this.pond = pond;
-        this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(duckIdleAnimationId);
-        this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(duckMovingAnimationId);
+        this.isColosseumDuck = isColosseumDuck;
         assignDuckSex();
+        setupDuckNameModelAnimation();
         for (int i = 0; i < MAX_TARGET_QUEUE_SIZE; i++)
             targetQueue[i] = new Target();
+    }
+
+    private void setupDuckNameModelAnimation(){
+        if (this.isColosseumDuck){
+            setModel(client.loadModel(colosseumDuckModelIds[this.sex]));
+            this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(colosseumDuckIdleAnimationId);
+            this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(colosseumDuckMovingAnimationId);
+        }else {
+            setModel(client.loadModel(duckModelIds[this.sex]));
+            this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(normalDuckIdleAnimationId);
+            this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(normalDuckMovingAnimationId);
+        }
+        this.duckName = duckNames[this.sex];
     }
 
     // Winner for weirdest function name I've ever written
@@ -67,12 +115,9 @@ public class Duck {
         // I figured like 1 in 4 ducks are boy ducks? idk?
         int random = getRandom(0, 4);
         if (random == 0){
-            setModel(client.loadModel(duckModelIds[0]));
-            this.duckName = duckNames[0];
+            this.sex = 0;
         } else {
-            setModel(client.loadModel(duckModelIds[1]));
-            this.duckName = duckNames[1];
-
+            this.sex = 1;
         }
     }
 
@@ -102,7 +147,7 @@ public class Duck {
         rlObject.setAnimation(animationPoses[0]);
         rlObject.setShouldLoop(true);
         rlObject.setActive(true);
-        this.currentAnimationID = duckIdleAnimationId;
+        this.currentAnimationID = animationPoses[0].getId();
         this.currentMovementSpeed = 0;
         this.targetQueueSize = 0;
     }
@@ -139,12 +184,22 @@ public class Duck {
     }
 
     public String getQuackText(){
-        return quackText;
+       return quackText;
     }
 
-    public void quack(){
+    public void quack(Boolean silenceDucks){
+        if (silenceDucks) {
+            quacking = false;
+            return;
+        }
         quacking = true;
-        quackTimer = MAX_QUACK_TIME;
+        if (isColosseumDuck && new java.util.Random().nextInt(30) == 0){
+            this.quackText = colosseumEncouragementText[new java.util.Random().nextInt(colosseumEncouragementText.length)];
+            quackTimer = COLOSSEUM_MAX_QUACK_TIME;
+        } else {
+            quackTimer = MAX_QUACK_TIME;
+            this.quackText = defaultQuackText;
+        }
     }
 
     public String getExamine(String menuTarget){

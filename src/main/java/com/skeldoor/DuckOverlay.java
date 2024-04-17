@@ -42,10 +42,11 @@ public class DuckOverlay extends Overlay{
                     {
                         Font overheadFont = FontManager.getRunescapeBoldFont();
                         FontMetrics metrics = graphics.getFontMetrics(overheadFont);
-                        Point shiftedP = new Point(p.getX() - (metrics.stringWidth(duck.getQuackText()) / 2), p.getY());
+                        String quackText = duck.getQuackText();
+                        Point shiftedP = new Point(p.getX() - (metrics.stringWidth(quackText) / 2), p.getY());
 
                         graphics.setFont(overheadFont);
-                        OverlayUtil.renderTextLocation(graphics, shiftedP, duck.getQuackText(),
+                        OverlayUtil.renderTextLocation(graphics, shiftedP, quackText,
                                 JagexColors.YELLOW_INTERFACE_TEXT);
                     }
                 }
