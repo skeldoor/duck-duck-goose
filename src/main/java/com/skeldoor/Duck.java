@@ -195,7 +195,7 @@ public class Duck {
         
         if (isColosseumDuck && onlyEnourage){
             this.quackText = colosseumEncouragementText[new java.util.Random().nextInt(colosseumEncouragementText.length)];
-            quackTimer = MAX_QUACK_TIME;
+            quackTimer = COLOSSEUM_MAX_QUACK_TIME;
             return;
         }
         
