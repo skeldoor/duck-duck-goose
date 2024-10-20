@@ -20,7 +20,6 @@ import net.runelite.client.ui.overlay.OverlayManager;
 
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.List;
 
 @Slf4j
 @PluginDescriptor(
@@ -191,7 +190,7 @@ public class DuckPlugin extends Plugin
 				if (getRandom(0, 3) == 0){ // Only move the ducks a third of the time
 					WorldPoint newPoint = duck.pond.getRandomPointInPond();
 					duck.moveTo(newPoint, radToJau(Math.atan2(newPoint.getX(), newPoint.getY())));
-					duck.quack(config.silenceDucks());
+					duck.quack(config.silenceDucks(), config.onlyEncourage());
 				}
 			}
 		}
@@ -206,7 +205,7 @@ public class DuckPlugin extends Plugin
 		for (Duck duck : ducks) {
 			if (duck.isActive()) {
 				if (getRandom(0, 3) == 0){
-					duck.quack(config.silenceDucks());
+					duck.quack(config.silenceDucks(), config.onlyEncourage());
 				}
 			}
 		}
