@@ -32,12 +32,13 @@ public class DuckOverlay extends Overlay{
     public Dimension render(Graphics2D graphics)
     {
         for (Duck duck : plugin.ducks){
-            if (duck.isActive() && duck.getQuacking())
+            if (duck.getQuacking())
             {
                 LocalPoint lp =  duck.getLocalLocation();
                 if (lp != null)
                 {
-                    Point p = Perspective.localToCanvas(plugin.getClient(), lp, plugin.getClient().getPlane(), duck.getRlObject().getModelHeight());
+                    int duckHeight = 37;
+                    Point p = Perspective.localToCanvas(plugin.getClient(), lp, plugin.getClient().getPlane(), duckHeight);
                     if (p != null)
                     {
                         Font overheadFont = FontManager.getRunescapeBoldFont();

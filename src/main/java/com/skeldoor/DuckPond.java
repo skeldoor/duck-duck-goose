@@ -12,6 +12,7 @@ public class DuckPond {
     private WorldPoint SWTile; // Used for orientation with POH
     private int maxDucks;
     private int plane;
+    public boolean museumPond;
 
     // Going to assume pond areas are square for now so I don't need to do any weird pathfinding for the movement of ducks
     DuckPond(WorldPoint nwtile, WorldPoint setile, int maxDucks){
@@ -20,6 +21,16 @@ public class DuckPond {
         this.maxDucks = maxDucks;
         this.plane = nwtile.getPlane();
         SWTile = new WorldPoint(nwtile.getX(), setile.getY(), plane);
+        this.museumPond = false;
+    }
+
+    DuckPond(WorldPoint nwtile, WorldPoint setile, int maxDucks, boolean museumPond){
+        this.NWTile = nwtile;
+        this.SETile = setile;
+        this.maxDucks = maxDucks;
+        this.plane = nwtile.getPlane();
+        SWTile = new WorldPoint(nwtile.getX(), setile.getY(), plane);
+        this.museumPond = museumPond;
     }
 
     public WorldPoint getRandomPointInPond(){

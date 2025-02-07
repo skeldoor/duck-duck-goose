@@ -55,7 +55,8 @@ public class DuckPlugin extends Plugin
 	DuckPond fossilIslandCleaningPond = new DuckPond(new WorldPoint(3691, 3884,0), new WorldPoint(3692,3882, 0), 2);
 	DuckPond lletyaPond = new DuckPond(new WorldPoint(2325, 3152,0), new WorldPoint(2328,3151, 0), 3);
 	DuckPond ardyZooPond = new DuckPond(new WorldPoint(2629, 3270,0), new WorldPoint(2631,3269, 0), 2);
-	DuckPond[] staticDuckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond, fossilIslandCleaningPond, lletyaPond, ardyZooPond};
+	DuckPond museumPond = new DuckPond(new WorldPoint(3266, 3453,0), new WorldPoint(3266,3453, 0), 1, true);
+	DuckPond[] staticDuckPonds = {yanillePond, barbVillagePond, zulandraFishingPond, zulandraPierPond, undergroundBloodveldPond, southFarmingGuildPond, fossilIslandCleaningPond, lletyaPond, ardyZooPond, museumPond};
 	List<DuckPond> dynamicDuckPonds;
 
 	int breadItemId = 2309;
@@ -95,7 +96,7 @@ public class DuckPlugin extends Plugin
 				{
 					Duck duck = new Duck();
 					ducks.add(duck);
-					duck.init(client, duckpond, false);
+					duck.init(client, duckpond, false, duckpond.museumPond);
 				}
 			}
 			ducksInitialised = true;
@@ -135,7 +136,7 @@ public class DuckPlugin extends Plugin
 					{
 						Duck duck = new Duck();
 						ducks.add(duck);
-						duck.init(client, duckPond, true);
+						duck.init(client, duckPond, true, false);
 					}
 				}
 			}
@@ -159,7 +160,7 @@ public class DuckPlugin extends Plugin
 				{
 					Duck duck = new Duck();
 					ducks.add(duck);
-					duck.init(client, dynamicHousePond, false);
+					duck.init(client, dynamicHousePond, false, false);
 					duck.getRlObject().setRadius(250); // Make duck render on top of pond
 				}
 			}
@@ -187,7 +188,7 @@ public class DuckPlugin extends Plugin
 	)
 	public void waddleToNewPoint(){
 		for (Duck duck : ducks) {
-			if (duck.isActive()) {
+			if (duckWithinRange(duck)) {
 				if (getRandom(0, 3) == 0){ // Only move the ducks a third of the time
 					WorldPoint newPoint = duck.pond.getRandomPointInPond();
 					duck.moveTo(newPoint, radToJau(Math.atan2(newPoint.getX(), newPoint.getY())));
@@ -204,7 +205,7 @@ public class DuckPlugin extends Plugin
 	)
 	public void quack(){
 		for (Duck duck : ducks) {
-			if (duck.isActive()) {
+			if (duckWithinRange(duck)) {
 				if (getRandom(0, 3) == 0){
 					duck.quack(config.silenceDucks());
 				}
@@ -233,7 +234,7 @@ public class DuckPlugin extends Plugin
 		int firstMenuIndex = 1;
 
 		for (Duck duck : ducks){
-			if (duck.isActive() && duck.getClickbox() != null && client.getMouseCanvasPosition() != null){
+			if (duckWithinRange(duck) && duck.getClickbox() != null && client.getMouseCanvasPosition() != null){
 				if (duck.getClickbox().contains(client.getMouseCanvasPosition().getX(),client.getMouseCanvasPosition().getY()))
 				{
 					String option;
@@ -258,7 +259,7 @@ public class DuckPlugin extends Plugin
 	@Subscribe
 	private void onMenuOptionClicked(MenuOptionClicked event) {
 		if (event.getMenuOption().equals("Feed") || event.getMenuOption().equals("Examine")) {
-			if (!(event.getMenuTarget().equals("<col=fffe00>Duck</col>") || event.getMenuTarget().equals("<col=fffe00>Drake</col>")))
+			if (!(event.getMenuTarget().equals("<col=fffe00>Duck</col>") || event.getMenuTarget().equals("<col=fffe00>Drake</col>") || event.getMenuTarget().equals("<col=fffe00>Ally</col>")))
 				return;
 			event.consume();
 			String messageText;
@@ -284,6 +285,14 @@ public class DuckPlugin extends Plugin
 	public int getRandom(int min, int max) {
 		Random random = new Random();
 		return random.nextInt(max - min) + min;
+	}
+	
+	private boolean duckWithinRange(Duck duck){
+		if (duck == null || client.getLocalPlayer() == null || duck.getLocalLocation().getX() == 0){
+			return false;
+		}
+		int oneChunk = 128*64;
+		return client.getLocalPlayer().getLocalLocation().distanceTo(duck.getLocalLocation()) < oneChunk;
 	}
 
 	@Provides

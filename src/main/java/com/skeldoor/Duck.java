@@ -80,16 +80,21 @@ public class Duck {
             "Migrate to victory!",
             "Why are you listening to encouragement from a duck?"};
     private Boolean isColosseumDuck = false;
+    private Boolean isMuseumDuck = false;
+    private String museumDuckName = "Ally";
+    private String museumDuckExamine = "They're a friend of the museum.";
     private int sex;
+    public boolean active = false;
 
     SimplePolygon clickbox;
 
-    public void init(Client client, DuckPond pond, Boolean isColosseumDuck)
+    public void init(Client client, DuckPond pond, Boolean isColosseumDuck, Boolean isMuseumDuck)
     {
         this.client = client;
         this.rlObject = client.createRuneLiteObject();
         this.pond = pond;
         this.isColosseumDuck = isColosseumDuck;
+        this.isMuseumDuck = isMuseumDuck;
         assignDuckSex();
         setupDuckNameModelAnimation();
         for (int i = 0; i < MAX_TARGET_QUEUE_SIZE; i++)
@@ -97,7 +102,7 @@ public class Duck {
     }
 
     private void setupDuckNameModelAnimation(){
-        if (this.isColosseumDuck){
+        if (this.isColosseumDuck || isMuseumDuck){
             setModel(client.loadModel(colosseumDuckModelIds[this.sex]));
             this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(colosseumDuckIdleAnimationId);
             this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(colosseumDuckMovingAnimationId);
@@ -106,7 +111,12 @@ public class Duck {
             this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(normalDuckIdleAnimationId);
             this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(normalDuckMovingAnimationId);
         }
-        this.duckName = duckNames[this.sex];
+        if (isMuseumDuck) {
+            this.duckName = museumDuckName;
+        }
+        else {
+            this.duckName = duckNames[this.sex];
+        }
     }
 
     // Winner for weirdest function name I've ever written
@@ -145,7 +155,7 @@ public class Duck {
         rlObject.setOrientation(jauOrientation);
         rlObject.setAnimation(animationPoses[0]);
         rlObject.setShouldLoop(true);
-        rlObject.setActive(true);
+        this.active = true;
         this.currentAnimationID = animationPoses[0].getId();
         this.currentMovementSpeed = 0;
         this.targetQueueSize = 0;
@@ -153,10 +163,11 @@ public class Duck {
 
     public void despawn()
     {
-        rlObject.setActive(false);
+        this.quacking = false;
         this.currentAnimationID = -1;
         this.currentMovementSpeed = 0;
         this.targetQueueSize = 0;
+        this.active = false;
     }
 
     public LocalPoint getLocalLocation()
@@ -202,6 +213,9 @@ public class Duck {
     }
 
     public String getExamine(String menuTarget){
+        if (menuTarget.contains("Ally")){
+            return museumDuckExamine;
+        }
         String[] duckExamines = {"Quack?", "It walks like a duck. Well, I guess it waddles like one."};
         String rareDrakeExamine = "This isn't Josh?";
         String duckExamine;
@@ -217,8 +231,7 @@ public class Duck {
     // moveTo() adds target movement states to the queue for later per-frame updating for rendering in onClientTick()
     public void moveTo(WorldPoint worldPosition, int jauOrientation)
     {
-
-        if (!rlObject.isActive())
+        if (!this.active)
         {
             spawn(worldPosition, jauOrientation);
         }
@@ -358,6 +371,8 @@ public class Duck {
             clickbox = calculateAABB(client, getRlObject().getModel(), getOrientation(), lp.getX(), lp.getY(), client.getPlane(), zOff);
 
         }
+
+        rlObject.setActive(this.active);
 
     }
 
