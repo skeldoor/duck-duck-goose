@@ -197,12 +197,19 @@ public class Duck {
        return quackText;
     }
 
-    public void quack(Boolean silenceDucks){
+    public void quack(Boolean silenceDucks, Boolean onlyEnourage){
         if (silenceDucks) {
             quacking = false;
             return;
         }
         quacking = true;
+        
+        if (isColosseumDuck && onlyEnourage){
+            this.quackText = colosseumEncouragementText[new java.util.Random().nextInt(colosseumEncouragementText.length)];
+            quackTimer = COLOSSEUM_MAX_QUACK_TIME;
+            return;
+        }
+        
         if (isColosseumDuck && new java.util.Random().nextInt(30) == 0){
             this.quackText = colosseumEncouragementText[new java.util.Random().nextInt(colosseumEncouragementText.length)];
             quackTimer = COLOSSEUM_MAX_QUACK_TIME;

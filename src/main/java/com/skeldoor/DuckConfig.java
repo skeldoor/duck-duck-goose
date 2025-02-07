@@ -15,4 +15,14 @@ public interface DuckConfig extends Config{
     {
         return false;
     }
+    
+    @ConfigItem(
+            keyName = "onlyEncourage",
+            name = "Ducks only Encourage",
+            description = "Ducks in the colosseum will only give words of encouragement"
+    )
+    default boolean onlyEncourage()
+    {
+        return false;
+    }
 }
