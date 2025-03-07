@@ -5,6 +5,8 @@ import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.geometry.SimplePolygon;
 import net.runelite.api.model.Jarvis;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Random;
 
@@ -12,6 +14,8 @@ import static net.runelite.api.Perspective.COSINE;
 import static net.runelite.api.Perspective.SINE;
 
 public class Duck {
+
+    private static final Logger log = LoggerFactory.getLogger(Duck.class);
 
     private enum POSE_ANIM
     {
@@ -32,18 +36,18 @@ public class Duck {
     }
 
     private final int MAX_TARGET_QUEUE_SIZE = 10;
-    private final Target[] targetQueue = new Target[MAX_TARGET_QUEUE_SIZE];
+    private Target[] targetQueue = new Target[MAX_TARGET_QUEUE_SIZE];
     private int targetQueueSize;
     private int lastDistance;
     int currentMovementSpeed = 0;
     int currentAnimationID = 6818;
-    int normalDuckIdleAnimationId = 6818;
-    int normalDuckMovingAnimationId = 6817;
-    int colosseumDuckIdleAnimationId = 6813;
-    int colosseumDuckMovingAnimationId = 6819;
+    int swimmingDuckIdleAnimationId = 6818;
+    int swimmingDuckMovingAnimationId = 6817;
+    int standingDuckIdleAnimationId = 6813;
+    int standingDuckMovingAnimationId = 6819;
     public Animation[] animationPoses = new Animation[2];
-    private final int[] duckModelIds = {26873, 26870};
-    private final int[] colosseumDuckModelIds = {26873, 26870};
+    private final int[] swimmingDuckModelIds = {26873, 26870};
+    private final int[] standingDuckModelIds = {26873, 26870};
     private final String[] duckNames = {"Drake", "Duck"};
     private String duckName;
     private boolean quacking = false;
@@ -99,18 +103,24 @@ public class Duck {
         setupDuckNameModelAnimation();
         for (int i = 0; i < MAX_TARGET_QUEUE_SIZE; i++)
             targetQueue[i] = new Target();
+        WorldPoint randomPondWorldPoint = pond.getRandomPointInPond();
+        LocalPoint localPosition = LocalPoint.fromWorld(client, randomPondWorldPoint);
+        if (localPosition != null && client.getPlane() == randomPondWorldPoint.getPlane()){
+            rlObject.setLocation(localPosition, randomPondWorldPoint.getPlane());
+        }
     }
 
     private void setupDuckNameModelAnimation(){
         if (this.isColosseumDuck || isMuseumDuck){
-            setModel(client.loadModel(colosseumDuckModelIds[this.sex]));
-            this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(colosseumDuckIdleAnimationId);
-            this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(colosseumDuckMovingAnimationId);
+            setModel(client.loadModel(standingDuckModelIds[this.sex]));
+            this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(standingDuckIdleAnimationId);
+            this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(standingDuckMovingAnimationId);
         }else {
-            setModel(client.loadModel(duckModelIds[this.sex]));
-            this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(normalDuckIdleAnimationId);
-            this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(normalDuckMovingAnimationId);
+            setModel(client.loadModel(swimmingDuckModelIds[this.sex]));
+            this.animationPoses[POSE_ANIM.IDLE.ordinal()] = client.loadAnimation(swimmingDuckIdleAnimationId);
+            this.animationPoses[POSE_ANIM.WALK.ordinal()] = client.loadAnimation(swimmingDuckMovingAnimationId);
         }
+        rlObject.setAnimation(animationPoses[0]);
         if (isMuseumDuck) {
             this.duckName = museumDuckName;
         }
@@ -168,6 +178,7 @@ public class Duck {
         this.currentMovementSpeed = 0;
         this.targetQueueSize = 0;
         this.active = false;
+        rlObject.setActive(false);
     }
 
     public LocalPoint getLocalLocation()
@@ -274,6 +285,7 @@ public class Duck {
 
     public void onClientTick()
     {
+        rlObject.setActive(this.active);
         if (quackTimer > 0) quackTimer--;
         if (quackTimer == 0) quacking = false;
         if (rlObject.isActive())
@@ -371,9 +383,6 @@ public class Duck {
             clickbox = calculateAABB(client, getRlObject().getModel(), getOrientation(), lp.getX(), lp.getY(), client.getPlane(), zOff);
 
         }
-
-        rlObject.setActive(this.active);
-
     }
 
     public boolean rotateObject(double intx, double inty)
