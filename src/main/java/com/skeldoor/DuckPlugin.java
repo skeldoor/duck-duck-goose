@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
@@ -44,6 +45,9 @@ public class DuckPlugin extends Plugin
 	@Inject
 	private DuckConfig config;
 
+	@Inject
+	private ClientThread clientThread;
+
 	List<Duck> ducks;
 
 	DuckPond yanillePond = new DuckPond(new WorldPoint(2542, 3082, 0), new WorldPoint(2544, 3079, 0), 3);
@@ -64,6 +68,8 @@ public class DuckPlugin extends Plugin
 
 	boolean ducksInitialised = false;
 
+	private int clientTickCount = 0;
+
 	@Override
 	protected void startUp()
 	{
@@ -76,11 +82,30 @@ public class DuckPlugin extends Plugin
 	protected void shutDown()
 	{
 		overlayManager.remove(duckOverlay);
+		clientThread.invokeLater(this::despawnAnyActiveDucks);
+	}
+
+	private void despawnAnyActiveDucks(){
 		for (Duck duck : ducks)
 		{
 			duck.despawn();
 		}
+		ducks.clear();
+		ducksInitialised = false;
 	}
+
+	private void spawnAllDucks(){
+		for (DuckPond duckpond : staticDuckPonds){
+			for (int i = 0; i < duckpond.getMaxDucks(); i++)
+			{
+				Duck duck = new Duck();
+				ducks.add(duck);
+				duck.init(client, duckpond, false, duckpond.museumPond);
+			}
+		}
+		ducksInitialised = true;
+	}
+
 
 	public Client getClient(){
 		return client;
@@ -89,30 +114,9 @@ public class DuckPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
-		if (gameStateChanged.getGameState() == GameState.LOGGING_IN && !ducksInitialised)
+		if (gameStateChanged.getGameState() == GameState.LOADING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN || gameStateChanged.getGameState() == GameState.LOGGING_IN)
 		{
-			for (DuckPond duckpond : staticDuckPonds){
-				for (int i = 0; i < duckpond.getMaxDucks(); i++)
-				{
-					Duck duck = new Duck();
-					ducks.add(duck);
-					duck.init(client, duckpond, false, duckpond.museumPond);
-				}
-			}
-			ducksInitialised = true;
-		}
-		if (gameStateChanged.getGameState() == GameState.LOADING || gameStateChanged.getGameState() == GameState.LOGIN_SCREEN)
-		{
-			for (Duck duck : ducks)
-			{
-				duck.despawn();
-			}
-		}
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
-		{
-			for (Duck duck : ducks){
-				duck.spawn(duck.pond.getRandomPointInPond(), getRandom(0, 2047));
-			}
+			clientThread.invokeLater(this::despawnAnyActiveDucks);
 		}
 	}
 
@@ -181,38 +185,6 @@ public class DuckPlugin extends Plugin
 		return false;
 	}
 
-	@Schedule(
-			period = 10,
-			unit = ChronoUnit.SECONDS,
-			asynchronous = true
-	)
-	public void waddleToNewPoint(){
-		for (Duck duck : ducks) {
-			if (duckWithinRange(duck)) {
-				if (getRandom(0, 3) == 0){ // Only move the ducks a third of the time
-					WorldPoint newPoint = duck.pond.getRandomPointInPond();
-					duck.moveTo(newPoint, radToJau(Math.atan2(newPoint.getX(), newPoint.getY())));
-					duck.quack(config.silenceDucks());
-				}
-			}
-		}
-	}
-
-	@Schedule(
-			period = 5,
-			unit = ChronoUnit.SECONDS,
-			asynchronous = true
-	)
-	public void quack(){
-		for (Duck duck : ducks) {
-			if (duckWithinRange(duck)) {
-				if (getRandom(0, 3) == 0){
-					duck.quack(config.silenceDucks());
-				}
-			}
-		}
-	}
-
 	static int radToJau(double a)
 	{
 		int j = (int) Math.round(a / Perspective.UNIT);
@@ -221,9 +193,31 @@ public class DuckPlugin extends Plugin
 
 	@Subscribe
 	public void onClientTick(ClientTick ignored) {
+		clientTickCount++;
+		if (clientTickCount > 100000) {
+			clientTickCount = 0;
+		}
+		if (pondWithinRange(staticDuckPonds) && !ducksInitialised){
+			clientThread.invokeLater(this::spawnAllDucks);
+		}
 		for (Duck duck : ducks) {
 			if (duck.getRlObject() != null && duck.animationPoses != null) {
-				duck.onClientTick();
+				clientThread.invokeLater(duck::onClientTick);
+			}
+			int tickRate = 50;
+			int fiveSeconds = 5 * tickRate;
+			if (duckWithinRange(duck)){
+
+				duck.active = true;
+				if (clientTickCount % fiveSeconds == 0) { // Every 5s potentially move and quack
+					if (getRandom(0, 3) == 0) { // Only move the ducks a third of the time
+						WorldPoint newPoint = duck.pond.getRandomPointInPond();
+						duck.moveTo(newPoint, radToJau(Math.atan2(newPoint.getX(), newPoint.getY())));
+						duck.quack(config.silenceDucks());
+					}
+				}
+			} else {
+				duck.active = false;
 			}
 		}
 	}
@@ -238,12 +232,11 @@ public class DuckPlugin extends Plugin
 				if (duck.getClickbox().contains(client.getMouseCanvasPosition().getX(),client.getMouseCanvasPosition().getY()))
 				{
 					String option;
-					if (Objects.requireNonNull(client.getItemContainer(InventoryID.INVENTORY)).contains(breadItemId)){
+					if (client.getItemContainer(InventoryID.INVENTORY) != null && client.getItemContainer(InventoryID.INVENTORY).contains(breadItemId)){
 						option = "Feed";
 					} else {
 						option = "Examine";
 					}
-
 					client.createMenuEntry(firstMenuIndex)
 							.setOption(option)
 							.setTarget("<col=fffe00>" + duck.getDuckName() + "</col>")
@@ -288,11 +281,20 @@ public class DuckPlugin extends Plugin
 	}
 	
 	private boolean duckWithinRange(Duck duck){
-		if (duck == null || client.getLocalPlayer() == null || duck.getLocalLocation().getX() == 0){
+		if (duck == null || client.getLocalPlayer() == null){
 			return false;
 		}
-		int oneChunk = 128*64;
-		return client.getLocalPlayer().getLocalLocation().distanceTo(duck.getLocalLocation()) < oneChunk;
+		int NPCViewDistance = 16;
+		return client.getLocalPlayer().getWorldLocation().distanceTo(duck.pond.getSWTile()) < NPCViewDistance;
+	}
+	private boolean pondWithinRange(DuckPond[] staticDuckPonds){
+		for(DuckPond duckPond : staticDuckPonds){
+			int NPCViewDistance = 16;
+			if (client.getLocalPlayer().getWorldLocation().distanceTo(duckPond.getSWTile()) < NPCViewDistance){
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Provides

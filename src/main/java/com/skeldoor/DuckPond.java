@@ -1,5 +1,6 @@
 package com.skeldoor;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.WorldPoint;
 import java.util.Random;
@@ -9,6 +10,7 @@ public class DuckPond {
 
     private WorldPoint NWTile;
     private WorldPoint SETile;
+    @Getter
     private WorldPoint SWTile; // Used for orientation with POH
     private int maxDucks;
     private int plane;
